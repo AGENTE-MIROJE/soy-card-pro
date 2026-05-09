@@ -5,62 +5,83 @@ import type { Profile } from '@/lib/supabase/types'
 interface Props { profile: Profile; username: string; appUrl: string; onClose: () => void }
 
 export default function ShareModal({ profile, username, appUrl, onClose }: Props) {
-  const [qrSrc, setQrSrc] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [nfcSupported, setNfcSupported] = useState(false)
-  const [nfcWriting, setNfcWriting] = useState(false)
-  const [nfcMsg, setNfcMsg] = useState('')
-  const [downloading, setDownloading] = useState(false)
+  const [qrSrc, setQrSrc]         = useState<string | null>(null)
+  const [copied, setCopied]        = useState(false)
+  const [nfcSupported, setNfc]     = useState(false)
+  const [nfcWriting, setNfcWr]     = useState(false)
+  const [nfcMsg, setNfcMsg]        = useState('')
+  const [sharing, setSharing]      = useState(false)
+  const [canShareFile, setCanShare] = useState(false)
 
   useEffect(() => {
     setQrSrc(`/api/qr/${profile.id}?via=qr`)
-    if (typeof window !== 'undefined' && 'NDEFReader' in window) setNfcSupported(true)
+    if (typeof window !== 'undefined') {
+      if ('NDEFReader' in window) setNfc(true)
+      // Probar si el browser soporta compartir archivos
+      if (navigator.canShare?.({ files: [new File([''], 'test.png', { type: 'image/png' })] })) {
+        setCanShare(true)
+      }
+    }
   }, [profile.id])
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(appUrl + '?via=link')
+    await navigator.clipboard.writeText(`${appUrl}?via=link`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const shareNative = async () => {
+  const shareLink = async () => {
     if (navigator.share) {
-      await navigator.share({ title: profile.display_name, text: profile.bio ?? '', url: appUrl + '?via=link' })
-    } else copyLink()
+      try {
+        await navigator.share({ title: profile.display_name, text: profile.bio ?? '', url: `${appUrl}?via=link` })
+      } catch { /* user cancelled */ }
+    } else {
+      copyLink()
+    }
   }
 
-  const downloadQR = async () => {
-    setDownloading(true)
+  // Descarga directa usando anchor DOM — funciona en todos los browsers incluyendo mobile
+  const downloadQR = () => {
+    const a = document.createElement('a')
+    a.href = `/api/qr/${profile.id}?format=png`
+    a.download = `qr-${profile.slug}.png`
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => document.body.removeChild(a), 200)
+  }
+
+  // Compartir QR como imagen con Web Share API (solo mobile browsers con soporte)
+  const shareQR = async () => {
+    setSharing(true)
     try {
-      const res = await fetch(`/api/qr/${profile.id}?format=png&via=qr`)
+      const res = await fetch(`/api/qr/${profile.id}?format=png`)
       const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `qr-${profile.slug}.png`
-      a.click()
-      URL.revokeObjectURL(url)
+      const file = new File([blob], `qr-${profile.slug}.png`, { type: 'image/png' })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: `QR de ${profile.display_name}` })
+      } else {
+        downloadQR()
+      }
+    } catch {
+      downloadQR()
     } finally {
-      setDownloading(false)
+      setSharing(false)
     }
   }
 
   const writeNFC = async () => {
     if (!('NDEFReader' in window)) return
-    setNfcWriting(true); setNfcMsg('Acerca una etiqueta NFC...')
+    setNfcWr(true); setNfcMsg('Acerca una etiqueta NFC...')
     try {
       const ndef = new (window as any).NDEFReader()
-      await ndef.write({ records: [{ recordType: 'url', data: appUrl + '?via=nfc' }] })
+      await ndef.write({ records: [{ recordType: 'url', data: `${appUrl}?via=nfc` }] })
       setNfcMsg('✓ NFC programado correctamente')
     } catch {
       setNfcMsg('✗ Error al escribir. Inténtalo de nuevo.')
     }
-    setNfcWriting(false)
+    setNfcWr(false)
     setTimeout(() => setNfcMsg(''), 3000)
-  }
-
-  const addToWallet = () => {
-    window.open(`/api/wallet/google/${profile.id}`, '_blank')
   }
 
   return (
@@ -81,11 +102,19 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
                 className="rounded-xl" style={{ imageRendering: 'pixelated' }} />
               <p className="text-center text-subtle text-xs mt-2">Escanea para abrir mi tarjeta</p>
             </div>
-            <button onClick={downloadQR} disabled={downloading}
-              className="btn-ghost-gold text-xs py-2 px-4 flex items-center gap-2">
-              <span>⬇</span>
-              <span>{downloading ? 'Descargando...' : 'Descargar QR (PNG)'}</span>
-            </button>
+            {/* Botones QR: descargar + compartir como imagen */}
+            <div className="flex gap-2 w-full">
+              <button onClick={downloadQR}
+                className="btn-ghost-gold text-xs py-2 flex-1 flex items-center justify-center gap-1.5">
+                <span>⬇</span> Descargar PNG
+              </button>
+              {canShareFile && (
+                <button onClick={shareQR} disabled={sharing}
+                  className="btn-ghost-gold text-xs py-2 flex-1 flex items-center justify-center gap-1.5">
+                  <span>↑</span> {sharing ? 'Compartiendo...' : 'Compartir imagen'}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -96,29 +125,29 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
             <span>{copied ? 'Copiado' : 'Copiar link'}</span>
           </button>
 
-          <button onClick={shareNative} className="btn-icon py-4">
+          <button onClick={shareLink} className="btn-icon py-4">
             <span className="text-xl">↑</span>
             <span>Compartir</span>
           </button>
 
           {profile.email && (
-            <a href={`mailto:?subject=Mi tarjeta digital&body=${appUrl}?via=email`}
-              className="btn-icon py-4" style={{ textDecoration: 'none' }}>
+            <button onClick={() => window.location.href = `mailto:?subject=Mi tarjeta digital&body=${encodeURIComponent(appUrl)}`}
+              className="btn-icon py-4">
               <span className="text-xl">✉</span>
               <span>Email</span>
-            </a>
+            </button>
           )}
 
           {profile.phone && (
-            <a href={`https://wa.me/?text=${encodeURIComponent(`Mi tarjeta digital: ${appUrl}?via=link`)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="btn-icon py-4" style={{ textDecoration: 'none' }}>
+            <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Mi tarjeta digital: ${appUrl}?via=link`)}`, '_blank', 'noopener,noreferrer')}
+              className="btn-icon py-4">
               <span className="text-xl">💬</span>
               <span>WhatsApp</span>
-            </a>
+            </button>
           )}
 
-          <button onClick={addToWallet} className="btn-icon py-4">
+          <button onClick={() => window.open(`/api/wallet/google/${profile.id}`, '_blank')}
+            className="btn-icon py-4">
             <span className="text-xl">◳</span>
             <span>G. Wallet</span>
           </button>
@@ -142,14 +171,12 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
         <div className="flex items-center gap-2 p-3 rounded-xl mb-4"
           style={{ background: 'var(--black-surface)', border: '1px solid var(--black-border)' }}>
           <span className="text-subtle text-xs truncate flex-1">{appUrl}</span>
-          <button onClick={copyLink} className="text-gold text-xs flex-shrink-0">
+          <button onClick={copyLink} className="text-gold text-xs flex-shrink-0 flex-shrink-0">
             {copied ? '✓' : 'Copiar'}
           </button>
         </div>
 
-        <button onClick={onClose} className="btn-ghost-gold w-full py-3">
-          Cerrar
-        </button>
+        <button onClick={onClose} className="btn-ghost-gold w-full py-3">Cerrar</button>
       </div>
     </>
   )

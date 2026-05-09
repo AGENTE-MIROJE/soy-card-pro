@@ -34,6 +34,24 @@ const PLATFORM_COLORS: Record<string, string> = {
   threads:  '#000000', twitch: '#9146FF',   discord: '#5865F2',
 }
 
+// Normaliza cualquier URL a absoluta con https://
+function toAbsoluteUrl(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+// Abre URL externa siempre en nueva pestaña usando window.open explícito
+function openExternal(rawUrl: string) {
+  const url = toAbsoluteUrl(rawUrl)
+  if (!url) return
+  const win = window.open(url, '_blank', 'noopener,noreferrer')
+  // Fallback si el popup fue bloqueado: navegar en misma pestaña
+  if (!win) window.location.href = url
+}
+
 interface Props { profile: Profile; username: string; appUrl: string }
 
 export default function PublicCardView({ profile, username, appUrl }: Props) {
@@ -58,9 +76,12 @@ export default function PublicCardView({ profile, username, appUrl }: Props) {
   }, [])
 
   const handleVCard    = () => { window.location.href = `/api/vcard/${profile.id}` }
-  const handleWhatsApp = () => { const p = profile.phone?.replace(/\D/g, ''); if (p) window.open(`https://wa.me/${p}`) }
-  const handleCall     = () => { if (profile.phone) window.location.href = `tel:${profile.phone}` }
-  const handleEmail    = () => { if (profile.email) window.location.href = `mailto:${profile.email}` }
+  const handleWhatsApp = () => {
+    const p = profile.phone?.replace(/\D/g, '')
+    if (p) window.open(`https://wa.me/${p}`, '_blank', 'noopener,noreferrer')
+  }
+  const handleCall  = () => { if (profile.phone) window.location.href = `tel:${profile.phone}` }
+  const handleEmail = () => { if (profile.email) window.location.href = `mailto:${profile.email}` }
 
   const socials = Array.isArray(profile.social_links)
     ? (profile.social_links as SocialLink[]).filter(s => s.url?.trim())
@@ -118,33 +139,34 @@ export default function PublicCardView({ profile, username, appUrl }: Props) {
               </button>
             )}
             {profile.website && (
-              <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 rounded-xl transition-all"
-                style={{ background: 'var(--black-surface)', border: '1px solid var(--black-border)', textDecoration: 'none' }}>
+              <button onClick={() => openExternal(profile.website!)}
+                className="flex items-center gap-3 p-3 rounded-xl transition-all w-full text-left"
+                style={{ background: 'var(--black-surface)', border: '1px solid var(--black-border)' }}>
                 <span className="text-gold text-lg">🔗</span>
                 <span className="text-pearl text-sm">{profile.website.replace(/^https?:\/\//, '')}</span>
-              </a>
+              </button>
             )}
           </div>
 
-          {/* Redes sociales — TODAS en grid */}
+          {/* Redes sociales — TODAS en grid, usando window.open para máxima compatibilidad */}
           {socials.length > 0 && (
             <div className="mb-5">
               <p className="text-muted text-xs uppercase tracking-widest text-center mb-3">Redes sociales</p>
               <div className="grid grid-cols-2 gap-2">
                 {socials.map((s, i) => (
-                  <a key={i} href={s.url.startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
+                  <button key={i}
+                    onClick={() => openExternal(s.url)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all text-left w-full"
                     style={{
                       background: 'var(--black-surface)',
-                      border: `1px solid ${PLATFORM_COLORS[s.platform] ?? 'var(--black-border)'}22`,
-                      textDecoration: 'none',
+                      border: `1px solid ${PLATFORM_COLORS[s.platform] ?? 'var(--black-border)'}44`,
+                      cursor: 'pointer',
                     }}>
                     <span style={{ color: PLATFORM_COLORS[s.platform] ?? 'var(--gold-matte)' }}>
                       <SocialIcon platform={s.platform} />
                     </span>
                     <span className="text-pearl text-xs font-medium capitalize truncate">{s.platform}</span>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -171,10 +193,10 @@ export default function PublicCardView({ profile, username, appUrl }: Props) {
             className="btn-icon flex-1 py-3 text-xs" style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
             <span>◱</span> QR / Compartir
           </button>
-          <a href={`/${username}`} className="btn-icon flex-1 py-3 text-xs"
-            style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', textDecoration: 'none' }}>
+          <button onClick={() => openExternal(`/${username}`)}
+            className="btn-icon flex-1 py-3 text-xs" style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
             <span>◈</span> Más perfiles
-          </a>
+          </button>
         </div>
 
         <p className="text-center text-subtle text-xs">Powered by <span className="text-gold">SOY_CARD_PRO</span></p>
