@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import type { Profile, SocialLink } from '@/lib/supabase/types'
+import { buildSocialUrl } from '@/lib/social-url'
 import ShareModal from './ShareModal'
 import LeadCaptureForm from '../lead/LeadCaptureForm'
 
@@ -34,22 +35,16 @@ const PLATFORM_COLORS: Record<string, string> = {
   threads:  '#000000', twitch: '#9146FF',   discord: '#5865F2',
 }
 
-// Normaliza cualquier URL a absoluta con https://
-function toAbsoluteUrl(raw: string): string {
-  const trimmed = raw.trim()
-  if (!trimmed) return ''
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//i.test(trimmed)) return trimmed
-  return `https://${trimmed}`
-}
-
-// Abre URL externa siempre en nueva pestaña usando window.open explícito
-function openExternal(rawUrl: string) {
-  const url = toAbsoluteUrl(rawUrl)
+// Abre URL externa con normalización inteligente por plataforma
+function openSocial(platform: string, rawUrl: string) {
+  const url = buildSocialUrl(platform, rawUrl)
   if (!url) return
   const win = window.open(url, '_blank', 'noopener,noreferrer')
-  // Fallback si el popup fue bloqueado: navegar en misma pestaña
   if (!win) window.location.href = url
+}
+
+function openExternal(rawUrl: string) {
+  openSocial('__generic__', rawUrl)
 }
 
 interface Props { profile: Profile; username: string; appUrl: string }
@@ -155,7 +150,7 @@ export default function PublicCardView({ profile, username, appUrl }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 {socials.map((s, i) => (
                   <button key={i}
-                    onClick={() => openExternal(s.url)}
+                    onClick={() => openSocial(s.platform, s.url)}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all text-left w-full"
                     style={{
                       background: 'var(--black-surface)',

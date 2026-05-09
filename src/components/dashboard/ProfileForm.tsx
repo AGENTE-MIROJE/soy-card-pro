@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
+import { buildSocialUrl } from '@/lib/social-url'
 
 const SOCIAL_PLATFORMS = [
   { value: 'linkedin',   label: 'LinkedIn' },
@@ -110,8 +111,11 @@ export default function ProfileForm({ userId, profile }: { userId: string; profi
     if (!form.slug.trim()) { setError('El slug es requerido.'); return }
     setLoading(true); setError('')
 
-    // Only save socials that have a URL filled in
-    const validSocials = socials.filter(s => s.url.trim().length > 0)
+    // Normalizar y guardar solo redes con URL válida
+    const validSocials = socials
+      .filter(s => s.url.trim().length > 0)
+      .map(s => ({ ...s, url: buildSocialUrl(s.platform, s.url) }))
+      .filter(s => s.url.length > 0)
 
     const payload = {
       ...form,
@@ -245,7 +249,7 @@ export default function ProfileForm({ userId, profile }: { userId: string; profi
                 value={s.url}
                 onChange={e => updateSocial(i, 'url', e.target.value)}
                 placeholder={PLACEHOLDERS[s.platform] ?? 'https://...'}
-                type="url"
+                type="text"
               />
             </div>
           ))}

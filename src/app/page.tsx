@@ -98,9 +98,9 @@ export default function HomePage() {
           <Link href="/login" className="btn-gold px-10 py-4 text-sm w-full text-center" style={{ textDecoration: 'none' }}>
             Crear mi tarjeta gratis
           </Link>
-          <Link href="/carlos/personal" target="_blank"
+          <Link href="/login"
             className="btn-ghost-gold px-10 py-4 text-sm w-full text-center" style={{ textDecoration: 'none' }}>
-            Ver demo en vivo →
+            Crear cuenta →
           </Link>
         </div>
 
