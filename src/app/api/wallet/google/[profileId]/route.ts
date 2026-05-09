@@ -37,7 +37,7 @@ export async function GET(
   const supabase = await createServiceClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, user_accounts(username)')
+    .select('*')
     .eq('id', profileId)
     .single()
 
@@ -45,9 +45,15 @@ export async function GET(
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
+  const { data: account } = await supabase
+    .from('user_accounts')
+    .select('username')
+    .eq('id', profile.user_id)
+    .single()
+
   const saJson = JSON.parse(Buffer.from(SA_JSON_B64, 'base64').toString('utf8'))
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
-  const username = (profile as any).user_accounts?.username || 'user'
+  const username = account?.username || 'user'
   const cardUrl = `${appUrl}/${username}/${profile.slug}`
   const classId = `${ISSUER_ID}.soy_card_pro_business_card`
   const objectId = `${ISSUER_ID}.profile_${profileId.replace(/-/g, '_')}`
