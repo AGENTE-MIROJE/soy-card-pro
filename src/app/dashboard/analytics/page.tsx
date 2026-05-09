@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import AnalyticsResetButton from '@/components/dashboard/AnalyticsResetButton'
 
 export default async function AnalyticsPage() {
   const supabase = await createClient()
@@ -38,9 +39,12 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="max-w-4xl mx-auto fade-in-up">
-      <div className="mb-8">
-        <h1 className="text-display text-pearl text-2xl">Analítica</h1>
-        <p className="text-muted text-sm mt-1">Últimos 7 días de actividad.</p>
+      <div className="flex items-start justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-display text-pearl text-2xl">Analítica</h1>
+          <p className="text-muted text-sm mt-1">Últimos 7 días de actividad.</p>
+        </div>
+        <AnalyticsResetButton />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

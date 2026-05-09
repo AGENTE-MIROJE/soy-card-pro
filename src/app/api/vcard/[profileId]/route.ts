@@ -15,10 +15,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
     .from('user_accounts').select('username').eq('id', profile.user_id).single()
 
   const appUrl = account
-    ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://soycardpro.vercel.app'}/${account.username}/${profile.slug}`
-    : process.env.NEXT_PUBLIC_APP_URL ?? 'https://soycardpro.vercel.app'
+    ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://soy-card-pro.vercel.app'}/${account.username}/${profile.slug}`
+    : process.env.NEXT_PUBLIC_APP_URL ?? 'https://soy-card-pro.vercel.app'
 
-  const vcf = generateVCard(profile as any, appUrl)
+  const vcf = await generateVCard(profile as any, appUrl)
 
   return new NextResponse(vcf, {
     headers: {

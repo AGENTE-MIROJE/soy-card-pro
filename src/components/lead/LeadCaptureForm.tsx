@@ -1,17 +1,47 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-interface Props { profileId: string; onClose: () => void }
+interface Props { profileId: string; ownerName?: string; onClose: () => void }
 
-export default function LeadCaptureForm({ profileId, onClose }: Props) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', company: '' })
+export default function LeadCaptureForm({ profileId, ownerName, onClose }: Props) {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: '' })
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [contactPickerSupported, setContactPickerSupported] = useState(false)
+  const [consent, setConsent] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'contacts' in navigator && 'ContactsManager' in window) {
+      setContactPickerSupported(true)
+    }
+  }, [])
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
+  const importFromContacts = async () => {
+    try {
+      const contacts = await (navigator as any).contacts.select(
+        ['name', 'email', 'tel', 'organization'],
+        { multiple: false }
+      )
+      if (contacts?.length) {
+        const c = contacts[0]
+        setForm(f => ({
+          ...f,
+          name: c.name?.[0] ?? f.name,
+          email: c.email?.[0] ?? f.email,
+          phone: c.tel?.[0] ?? f.phone,
+          company: c.organization?.[0] ?? f.company,
+        }))
+      }
+    } catch {
+      // User cancelled or permission denied — no action needed
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!consent) return
     setLoading(true)
     await fetch('/api/lead', {
       method: 'POST',
@@ -20,7 +50,7 @@ export default function LeadCaptureForm({ profileId, onClose }: Props) {
     })
     setDone(true)
     setLoading(false)
-    setTimeout(onClose, 2000)
+    setTimeout(onClose, 2500)
   }
 
   return (
@@ -30,35 +60,59 @@ export default function LeadCaptureForm({ profileId, onClose }: Props) {
         <div className="bottom-sheet-handle" />
 
         {done ? (
-          <div className="text-center py-6">
-            <div className="text-gold text-4xl mb-3">✓</div>
-            <p className="text-pearl font-semibold">¡Contacto compartido!</p>
-            <p className="text-muted text-sm mt-1">El dueño de esta tarjeta recibirá tu información.</p>
+          <div className="text-center py-8">
+            <div className="text-gold text-5xl mb-4">✓</div>
+            <p className="text-pearl font-semibold text-lg">¡Contacto compartido!</p>
+            <p className="text-muted text-sm mt-2">
+              {ownerName ? `${ownerName} recibirá tu información.` : 'El titular recibirá tu información.'}
+            </p>
           </div>
         ) : (
           <>
-            <h2 className="text-pearl text-display text-lg font-bold text-center mb-2">
+            <h2 className="text-pearl text-display text-lg font-bold text-center mb-1">
               Compartir tu contacto
             </h2>
-            <p className="text-muted text-sm text-center mb-5">
-              Deja tus datos para que puedan comunicarse contigo.
-            </p>
+            {ownerName && (
+              <p className="text-gold text-sm text-center mb-4">con {ownerName}</p>
+            )}
+
+            {/* Botón Contact Picker (solo en Chrome Android / Safari iOS) */}
+            {contactPickerSupported && (
+              <button type="button" onClick={importFromContacts}
+                className="w-full btn-ghost-gold text-sm py-3 mb-4 flex items-center justify-center gap-2">
+                <span>📱</span>
+                <span>Importar desde mis contactos</span>
+              </button>
+            )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <input className="input-gold" value={form.name} onChange={e => set('name', e.target.value)}
-                placeholder="Tu nombre" required />
+                placeholder="Tu nombre completo" required
+                autoComplete="name" />
               <input className="input-gold" type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                placeholder="Tu email" />
+                placeholder="Tu email"
+                autoComplete="email" />
               <input className="input-gold" value={form.phone} onChange={e => set('phone', e.target.value)}
-                placeholder="Tu teléfono / WhatsApp" />
+                placeholder="Tu teléfono / WhatsApp"
+                autoComplete="tel" />
               <input className="input-gold" value={form.company} onChange={e => set('company', e.target.value)}
-                placeholder="Tu empresa (opcional)" />
+                placeholder="Tu empresa (opcional)"
+                autoComplete="organization" />
+              <textarea className="input-gold" rows={2} value={form.message} onChange={e => set('message', e.target.value)}
+                placeholder="Mensaje (opcional)" />
 
-              <p className="text-subtle text-xs text-center">
-                Al enviar, consientes que el titular de esta tarjeta guarde tu información de contacto.
-              </p>
+              {/* Consentimiento explícito */}
+              <label className="flex items-start gap-3 cursor-pointer mt-1">
+                <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                  className="mt-0.5 flex-shrink-0"
+                  style={{ accentColor: 'var(--gold-matte)', width: 16, height: 16 }} />
+                <span className="text-subtle text-xs leading-relaxed">
+                  Consiento que {ownerName ?? 'el titular'} guarde mi información de contacto y me contacte.
+                </span>
+              </label>
 
-              <button type="submit" disabled={loading} className="btn-gold py-3 mt-1">
+              <button type="submit" disabled={loading || !consent || !form.name.trim()}
+                className="btn-gold py-3 mt-1 disabled:opacity-40 disabled:cursor-not-allowed">
                 {loading ? 'Enviando...' : 'Enviar mi contacto'}
               </button>
               <button type="button" onClick={onClose} className="btn-ghost-gold py-3">

@@ -6,6 +6,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
   const { profileId } = await params
   const { searchParams } = new URL(req.url)
   const via = searchParams.get('via') ?? 'qr'
+  const format = searchParams.get('format') ?? 'svg'
 
   const supabase = createServiceClient()
   const { data: profile } = await supabase
@@ -16,8 +17,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
   const { data: account } = await supabase
     .from('user_accounts').select('username').eq('id', profile.user_id).single()
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://soycardpro.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://soy-card-pro.vercel.app'
   const cardUrl = `${appUrl}/${account?.username}/${profile.slug}?via=${via}`
+
+  if (format === 'png') {
+    const pngBuffer = await QRCode.toBuffer(cardUrl, {
+      type: 'png',
+      width: 600,
+      margin: 3,
+      color: { dark: '#C9A84C', light: '#0D0D12' },
+      errorCorrectionLevel: 'M',
+    })
+    return new NextResponse(pngBuffer as unknown as BodyInit, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Disposition': `attachment; filename="qr-${profile.slug}.png"`,
+        'Cache-Control': 'public, max-age=300',
+      },
+    })
+  }
 
   const svg = await QRCode.toString(cardUrl, {
     type: 'svg',

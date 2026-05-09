@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import type { Profile } from '@/lib/supabase/types'
 
 interface Props { profile: Profile; username: string; appUrl: string; onClose: () => void }
@@ -10,11 +10,10 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
   const [nfcSupported, setNfcSupported] = useState(false)
   const [nfcWriting, setNfcWriting] = useState(false)
   const [nfcMsg, setNfcMsg] = useState('')
+  const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
-    // Cargar QR
     setQrSrc(`/api/qr/${profile.id}?via=qr`)
-    // Detectar NFC
     if (typeof window !== 'undefined' && 'NDEFReader' in window) setNfcSupported(true)
   }, [profile.id])
 
@@ -28,6 +27,22 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
     if (navigator.share) {
       await navigator.share({ title: profile.display_name, text: profile.bio ?? '', url: appUrl + '?via=link' })
     } else copyLink()
+  }
+
+  const downloadQR = async () => {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/qr/${profile.id}?format=png&via=qr`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `qr-${profile.slug}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setDownloading(false)
+    }
   }
 
   const writeNFC = async () => {
@@ -60,12 +75,17 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
 
         {/* QR Code */}
         {qrSrc && (
-          <div className="flex justify-center mb-6">
+          <div className="flex flex-col items-center mb-6 gap-3">
             <div className="p-4 rounded-2xl" style={{ background: 'var(--black-surface)', border: '1px solid var(--gold-border)' }}>
               <img src={qrSrc} alt="QR Code" width={180} height={180}
                 className="rounded-xl" style={{ imageRendering: 'pixelated' }} />
               <p className="text-center text-subtle text-xs mt-2">Escanea para abrir mi tarjeta</p>
             </div>
+            <button onClick={downloadQR} disabled={downloading}
+              className="btn-ghost-gold text-xs py-2 px-4 flex items-center gap-2">
+              <span>⬇</span>
+              <span>{downloading ? 'Descargando...' : 'Descargar QR (PNG)'}</span>
+            </button>
           </div>
         )}
 
