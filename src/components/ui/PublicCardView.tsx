@@ -118,7 +118,7 @@ export default function PublicCardView({ profile, username, appUrl }: Props) {
               </button>
             )}
             {profile.website && (
-              <a href={profile.website} target="_blank" rel="noopener noreferrer"
+              <a href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl transition-all"
                 style={{ background: 'var(--black-surface)', border: '1px solid var(--black-border)', textDecoration: 'none' }}>
                 <span className="text-gold text-lg">🔗</span>
@@ -133,7 +133,7 @@ export default function PublicCardView({ profile, username, appUrl }: Props) {
               <p className="text-muted text-xs uppercase tracking-widest text-center mb-3">Redes sociales</p>
               <div className="grid grid-cols-2 gap-2">
                 {socials.map((s, i) => (
-                  <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                  <a key={i} href={s.url.startsWith('http') ? s.url : `https://${s.url}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all"
                     style={{
                       background: 'var(--black-surface)',
