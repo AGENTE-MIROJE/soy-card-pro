@@ -46,7 +46,7 @@ export default async function DashboardPage() {
             <span>Tu link: <a
               href={`/${account.username}`} target="_blank"
               className="text-gold-pearl hover:text-gold transition-colors">
-              soycardpro.vercel.app/{account.username}
+              {(process.env.NEXT_PUBLIC_APP_URL ?? 'https://soy-card-pro.vercel.app').replace('https://', '')}/{account.username}
             </a></span>
           )}
         </p>
