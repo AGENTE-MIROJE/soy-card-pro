@@ -435,11 +435,15 @@ body {
   background: var(--black-card);
   border-right: 1px solid var(--black-border);
   width: 240px;
+  min-width: 240px;
   min-height: 100vh;
   padding: 1.5rem 1rem;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 0.5rem;
+}
+@media (min-width: 768px) {
+  .sidebar { display: flex; }
 }
 .sidebar-item {
   display: flex; align-items: center; gap: 0.75rem;
