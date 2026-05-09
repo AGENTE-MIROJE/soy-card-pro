@@ -1,0 +1,491 @@
+/* SOY_CARD_PRO — Design System Premium v1.0 */
+/* Negro profundo + Dorado mate + Perlado */
+
+:root {
+  /* ── Negros ───────────────────────────── */
+  --black-deep:    #050507;
+  --black-card:    #0D0D12;
+  --black-surface: #131318;
+  --black-border:  #1E1E26;
+  --black-hover:   #1A1A22;
+
+  /* ── Dorados ──────────────────────────── */
+  --gold-matte:    #C9A84C;
+  --gold-pearl:    #E8D5A3;
+  --gold-shine:    #F5E6C8;
+  --gold-deep:     #A07830;
+  --gold-glow:     rgba(201, 168, 76, 0.35);
+  --gold-border:   rgba(201, 168, 76, 0.25);
+  --gold-glass:    rgba(201, 168, 76, 0.08);
+
+  /* ── Blancos perlados ─────────────────── */
+  --pearl-white:   #F0EDE8;
+  --pearl-muted:   #B8B0A0;
+  --pearl-subtle:  #6B6560;
+
+  /* ── Gradientes ──────────────────────── */
+  --gradient-gold: linear-gradient(135deg, #C9A84C 0%, #E8D5A3 50%, #C9A84C 100%);
+  --gradient-gold-subtle: linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(232,213,163,0.05) 100%);
+  --gradient-card: linear-gradient(180deg, #0D0D12 0%, #050507 100%);
+  --gradient-dark: linear-gradient(135deg, #131318 0%, #0D0D12 100%);
+
+  /* ── Glassmorphism ───────────────────── */
+  --glass-bg:      rgba(13, 13, 18, 0.82);
+  --glass-border:  rgba(201, 168, 76, 0.20);
+  --glass-blur:    blur(20px);
+
+  /* ── Sombras ─────────────────────────── */
+  --shadow-gold:   0 0 30px rgba(201, 168, 76, 0.15), 0 4px 20px rgba(0,0,0,0.6);
+  --shadow-card:   0 8px 40px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-btn:    0 4px 15px rgba(201, 168, 76, 0.25);
+
+  /* ── Tipografía ──────────────────────── */
+  --font-display: 'Playfair Display', 'Georgia', serif;
+  --font-body:    'Inter', 'Helvetica Neue', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Radios ──────────────────────────── */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-full: 9999px;
+
+  /* ── Transiciones ────────────────────── */
+  --ease-premium: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 150ms var(--ease-premium);
+  --transition-mid:  250ms var(--ease-premium);
+  --transition-slow: 400ms var(--ease-premium);
+}
+
+/* ─────────────────────────────────────────────
+   BASE RESET & BODY
+───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background-color: var(--black-deep);
+  color: var(--pearl-white);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────
+   COMPONENTES BASE
+───────────────────────────────────────────── */
+
+/* Tarjeta glassmorphism */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Superficie de tarjeta sólida */
+.surface-card {
+  background: var(--black-card);
+  border: 1px solid var(--black-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ─────────────────────────────────────────────
+   BOTONES
+───────────────────────────────────────────── */
+.btn-gold {
+  background: var(--gradient-gold);
+  color: var(--black-deep);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 0.75rem 1.75rem;
+  cursor: pointer;
+  transition: all var(--transition-mid);
+  box-shadow: var(--shadow-btn);
+}
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(201, 168, 76, 0.4);
+  filter: brightness(1.08);
+}
+.btn-gold:active { transform: translateY(0); }
+
+.btn-ghost-gold {
+  background: transparent;
+  color: var(--gold-matte);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-full);
+  padding: 0.75rem 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-mid);
+}
+.btn-ghost-gold:hover {
+  background: var(--gold-glass);
+  border-color: var(--gold-matte);
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0.75rem 1rem;
+  background: var(--black-surface);
+  border: 1px solid var(--black-border);
+  border-radius: var(--radius-md);
+  color: var(--gold-pearl);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-mid);
+  white-space: nowrap;
+}
+.btn-icon:hover {
+  background: var(--gold-glass);
+  border-color: var(--gold-border);
+  color: var(--gold-matte);
+  transform: translateY(-2px);
+}
+
+/* ─────────────────────────────────────────────
+   AVATAR CON ARO DORADO ANIMADO
+───────────────────────────────────────────── */
+.avatar-gold-ring {
+  position: relative;
+  display: inline-block;
+}
+.avatar-gold-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--gold-deep),
+    var(--gold-matte),
+    var(--gold-shine),
+    var(--gold-pearl),
+    var(--gold-matte),
+    var(--gold-deep)
+  );
+  animation: spin-ring 4s linear infinite;
+  z-index: -1;
+}
+.avatar-gold-ring::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: var(--black-deep);
+  z-index: -1;
+}
+@keyframes spin-ring {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────
+   SHIMMER SWEEP en bordes
+───────────────────────────────────────────── */
+.shimmer-border {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-border::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(201, 168, 76, 0.12) 40%,
+    rgba(245, 230, 200, 0.2) 50%,
+    rgba(201, 168, 76, 0.12) 60%,
+    transparent 100%
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { left: -100%; }
+  to   { left: 200%; }
+}
+
+/* ─────────────────────────────────────────────
+   TIPOGRAFÍA
+───────────────────────────────────────────── */
+.text-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.text-gold        { color: var(--gold-matte); }
+.text-gold-pearl  { color: var(--gold-pearl); }
+.text-gold-shine  { color: var(--gold-shine); }
+.text-pearl       { color: var(--pearl-white); }
+.text-muted       { color: var(--pearl-muted); }
+.text-subtle      { color: var(--pearl-subtle); }
+
+/* ─────────────────────────────────────────────
+   BADGES / ETIQUETAS de fuente
+───────────────────────────────────────────── */
+.badge-nfc {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--gold-matte);
+  border: 1px solid var(--gold-border);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+.badge-qr {
+  background: rgba(232, 213, 163, 0.12);
+  color: var(--gold-pearl);
+  border: 1px solid rgba(232, 213, 163, 0.2);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+.badge-link {
+  background: rgba(240, 237, 232, 0.08);
+  color: var(--pearl-muted);
+  border: 1px solid rgba(240, 237, 232, 0.12);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ─────────────────────────────────────────────
+   INPUTS
+───────────────────────────────────────────── */
+.input-gold {
+  background: var(--black-surface);
+  border: 1px solid var(--black-border);
+  border-radius: var(--radius-md);
+  color: var(--pearl-white);
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  width: 100%;
+  transition: border-color var(--transition-fast);
+  outline: none;
+}
+.input-gold::placeholder { color: var(--pearl-subtle); }
+.input-gold:focus {
+  border-color: var(--gold-matte);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+}
+
+/* ─────────────────────────────────────────────
+   CHECKBOX DORADO
+───────────────────────────────────────────── */
+.checkbox-gold {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--black-border);
+  background: var(--black-surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.checkbox-gold.checked {
+  background: var(--gold-matte);
+  border-color: var(--gold-matte);
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
+}
+
+/* ─────────────────────────────────────────────
+   DIVIDER dorado
+───────────────────────────────────────────── */
+.divider-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-border), transparent);
+  margin: 1.5rem 0;
+}
+
+/* ─────────────────────────────────────────────
+   SCROLL PREMIUM
+───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--black-deep); }
+::-webkit-scrollbar-thumb {
+  background: var(--gold-border);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--gold-matte); }
+
+/* ─────────────────────────────────────────────
+   ANIMACIONES UTILITARIAS
+───────────────────────────────────────────── */
+.fade-in-up {
+  animation: fadeInUp 0.5s var(--ease-premium) both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.4s var(--ease-premium) both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Glow pulse en KPIs */
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 10px rgba(201,168,76,0.3); }
+  50%       { text-shadow: 0 0 20px rgba(201,168,76,0.6), 0 0 40px rgba(201,168,76,0.2); }
+}
+
+/* ─────────────────────────────────────────────
+   MOBILE BOTTOM SHEET
+───────────────────────────────────────────── */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--black-card);
+  border-top: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 1.5rem;
+  z-index: 50;
+  transform: translateY(0);
+  animation: slideUp 0.35s var(--ease-bounce) both;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.bottom-sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--black-border);
+  border-radius: var(--radius-full);
+  margin: 0 auto 1.25rem;
+}
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 7, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 49;
+  animation: fadeIn 0.25s ease both;
+}
+
+/* ─────────────────────────────────────────────
+   NOTIFICATION CARD (scan en tiempo real)
+───────────────────────────────────────────── */
+.notification-scan {
+  background: var(--black-card);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-gold);
+  animation: fadeInUp 0.4s var(--ease-premium) both;
+}
+
+/* ─────────────────────────────────────────────
+   STAT CARD (KPIs dashboard)
+───────────────────────────────────────────── */
+.stat-card {
+  background: var(--black-card);
+  border: 1px solid var(--black-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  transition: all var(--transition-mid);
+}
+.stat-card:hover {
+  border-color: var(--gold-border);
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-2px);
+}
+.stat-number {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gold-matte);
+  line-height: 1;
+}
+
+/* ─────────────────────────────────────────────
+   SIDEBAR DASHBOARD
+───────────────────────────────────────────── */
+.sidebar {
+  background: var(--black-card);
+  border-right: 1px solid var(--black-border);
+  width: 240px;
+  min-height: 100vh;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  color: var(--pearl-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+.sidebar-item:hover {
+  background: var(--black-hover);
+  color: var(--pearl-white);
+}
+.sidebar-item.active {
+  background: var(--gold-glass);
+  color: var(--gold-matte);
+  border: 1px solid var(--gold-border);
+}
+
+/* ─────────────────────────────────────────────
+   TABLE PREMIUM
+───────────────────────────────────────────── */
+.table-premium {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table-premium th {
+  color: var(--gold-matte);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  background: var(--black-surface);
+  border-bottom: 1px solid var(--black-border);
+  text-align: left;
+}
+.table-premium td {
+  padding: 0.875rem 1rem;
+  color: var(--pearl-white);
+  font-size: 0.875rem;
+  border-bottom: 1px solid rgba(30, 30, 38, 0.6);
+  transition: background var(--transition-fast);
+}
+.table-premium tr:hover td { background: var(--black-hover); }
