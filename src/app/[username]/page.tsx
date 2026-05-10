@@ -1,5 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Profile } from '@/lib/supabase/types'
 
@@ -7,16 +8,21 @@ interface Props { params: Promise<{ username: string }> }
 
 export default async function AllProfilesPage({ params }: Props) {
   const { username } = await params
-  const supabase = await createClient()
+  const svc = createServiceClient()
 
-  const { data: account } = await supabase
+  const { data: account } = await svc
     .from('user_accounts').select('id, username, full_name, avatar_url')
     .eq('username', username).single()
   if (!account) notFound()
 
-  const { data: profiles } = await supabase
+  const { data: profiles } = await svc
     .from('profiles').select('*').eq('user_id', account.id).eq('is_active', true).order('sort_order')
   if (!profiles?.length) notFound()
+
+  // Si solo tiene un perfil, redirigir directo a él
+  if (profiles.length === 1) {
+    redirect(`/${username}/${profiles[0].slug}`)
+  }
 
   return (
     <main style={{ background: 'var(--black-deep)', minHeight: '100vh' }}
