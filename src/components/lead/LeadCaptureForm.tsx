@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { savePendingLead } from '@/lib/offline-db'
 
 interface Props { profileId: string; ownerName?: string; onClose: () => void }
 
@@ -7,6 +8,7 @@ export default function LeadCaptureForm({ profileId, ownerName, onClose }: Props
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: '' })
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [offline, setOffline] = useState(false)
   const [contactPickerSupported, setContactPickerSupported] = useState(false)
   const [consent, setConsent] = useState(false)
 
@@ -43,14 +45,51 @@ export default function LeadCaptureForm({ profileId, ownerName, onClose }: Props
     e.preventDefault()
     if (!consent) return
     setLoading(true)
-    await fetch('/api/lead', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, profile_id: profileId, consent: true }),
-    })
-    setDone(true)
-    setLoading(false)
-    setTimeout(onClose, 2500)
+
+    try {
+      const res = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, profile_id: profileId, consent: true }),
+      })
+
+      if (!res.ok) throw new Error('Network response was not ok')
+
+      setDone(true)
+      setLoading(false)
+      setTimeout(onClose, 2500)
+    } catch (err) {
+      // Network error — save lead offline
+      try {
+        await savePendingLead({
+          profile_id: profileId,
+          name: form.name,
+          email: form.email || undefined,
+          phone: form.phone || undefined,
+          company: form.company || undefined,
+          message: form.message || undefined,
+          consent: true,
+        })
+
+        // Try to register background sync
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+          const reg = await navigator.serviceWorker.ready
+          try {
+            await (reg as any).sync.register('sync-leads')
+          } catch {
+            // Sync registration failed, but lead is saved locally
+          }
+        }
+
+        setOffline(true)
+        setDone(true)
+        setLoading(false)
+        setTimeout(onClose, 2500)
+      } catch {
+        setLoading(false)
+        alert('Error al guardar. Por favor intenta nuevamente.')
+      }
+    }
   }
 
   return (
@@ -62,9 +101,15 @@ export default function LeadCaptureForm({ profileId, ownerName, onClose }: Props
         {done ? (
           <div className="text-center py-8">
             <div className="text-gold text-5xl mb-4">✓</div>
-            <p className="text-pearl font-semibold text-lg">¡Contacto compartido!</p>
+            <p className="text-pearl font-semibold text-lg">
+              {offline ? '¡Contacto guardado!' : '¡Contacto compartido!'}
+            </p>
             <p className="text-muted text-sm mt-2">
-              {ownerName ? `${ownerName} recibirá tu información.` : 'El titular recibirá tu información.'}
+              {offline
+                ? 'Tu información se sincronizará cuando vuelva la conexión.'
+                : ownerName
+                  ? `${ownerName} recibirá tu información.`
+                  : 'El titular recibirá tu información.'}
             </p>
           </div>
         ) : (

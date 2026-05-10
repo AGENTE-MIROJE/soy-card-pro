@@ -71,6 +71,60 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   )
 })
 
+// Background Sync — sync pending leads when connection returns
+self.addEventListener('sync', (event: any) => {
+  if (event.tag === 'sync-leads') {
+    event.waitUntil(syncPendingLeads())
+  }
+})
+
+async function syncPendingLeads() {
+  try {
+    // Open IndexedDB to get pending leads
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('soy-card-pro-offline', 1)
+      req.onerror = () => reject(req.error)
+      req.onsuccess = () => resolve(req.result)
+    })
+
+    const tx = db.transaction(['pending-leads'], 'readonly')
+    const store = tx.objectStore('pending-leads')
+    const leads = await new Promise<any[]>((resolve, reject) => {
+      const req = store.getAll()
+      req.onerror = () => reject(req.error)
+      req.onsuccess = () => resolve(req.result)
+    })
+
+    if (!leads.length) return
+
+    // Convert to format expected by API (omit id)
+    const leadsToSync = leads.map(({ id, timestamp, ...rest }) => rest)
+
+    // POST batch to API
+    const res = await fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(leadsToSync),
+    })
+
+    if (res.ok) {
+      // Delete synced leads from IndexedDB
+      const txDelete = db.transaction(['pending-leads'], 'readwrite')
+      const storeDelete = txDelete.objectStore('pending-leads')
+      leads.forEach(lead => storeDelete.delete(lead.id))
+
+      await new Promise<void>((resolve, reject) => {
+        txDelete.onerror = () => reject(txDelete.error)
+        txDelete.oncomplete = () => resolve()
+      })
+    }
+  } catch (err) {
+    // Sync failed — will retry on next connection
+    console.error('Background sync failed:', err)
+    throw err
+  }
+}
+
 self.skipWaiting()
 self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(self.clients.claim())
