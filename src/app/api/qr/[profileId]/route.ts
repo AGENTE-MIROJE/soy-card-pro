@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import QRCode from 'qrcode'
+import sharp from 'sharp'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ profileId: string }> }) {
   const { profileId } = await params
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
 
   const supabase = createServiceClient()
   const { data: profile } = await supabase
-    .from('profiles').select('slug, user_id').eq('id', profileId).single()
+    .from('profiles').select('slug, user_id, avatar_url').eq('id', profileId).single()
 
   if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -21,14 +22,63 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
   const cardUrl = `${appUrl}/${account?.username}/${profile.slug}?via=${via}`
 
   if (format === 'png') {
-    const pngBuffer = await QRCode.toBuffer(cardUrl, {
+    const qrSize = 600
+    const qrBuffer = await QRCode.toBuffer(cardUrl, {
       type: 'png',
-      width: 600,
+      width: qrSize,
       margin: 3,
       color: { dark: '#C9A84C', light: '#0D0D12' },
-      errorCorrectionLevel: 'M',
+      errorCorrectionLevel: 'H',
     })
-    return new NextResponse(pngBuffer as unknown as BodyInit, {
+
+    let finalBuffer: Buffer = qrBuffer as unknown as Buffer
+
+    // Composite avatar in center if available
+    if (profile.avatar_url) {
+      try {
+        const avatarRes = await fetch(profile.avatar_url)
+        if (avatarRes.ok) {
+          const avatarRaw = Buffer.from(await avatarRes.arrayBuffer())
+          const avatarSize = 120
+          const circleRadius = avatarSize / 2
+
+          // Create circular avatar with white border
+          const borderSize = avatarSize + 12
+          const circularAvatar = await sharp(avatarRaw)
+            .resize(avatarSize, avatarSize, { fit: 'cover' })
+            .composite([{
+              input: Buffer.from(
+                `<svg><circle cx="${circleRadius}" cy="${circleRadius}" r="${circleRadius}"/></svg>`
+              ),
+              blend: 'dest-in',
+            }])
+            .png()
+            .toBuffer()
+
+          // Add white background circle behind avatar
+          const withBorder = await sharp({
+            create: { width: borderSize, height: borderSize, channels: 4, background: { r: 13, g: 13, b: 18, alpha: 1 } }
+          })
+            .composite([
+              { input: Buffer.from(`<svg><circle cx="${borderSize/2}" cy="${borderSize/2}" r="${borderSize/2}" fill="#C9A84C"/></svg>`), blend: 'over' },
+              { input: circularAvatar, top: 6, left: 6 },
+            ])
+            .png()
+            .toBuffer()
+
+          const top = Math.floor((qrSize - borderSize) / 2)
+          const left = Math.floor((qrSize - borderSize) / 2)
+          finalBuffer = await sharp(qrBuffer as unknown as Buffer)
+            .composite([{ input: withBorder, top, left }])
+            .png()
+            .toBuffer()
+        }
+      } catch {
+        // If avatar compositing fails, return plain QR
+      }
+    }
+
+    return new NextResponse(finalBuffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'image/png',
         'Content-Disposition': `attachment; filename="qr-${profile.slug}.png"`,
@@ -42,7 +92,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
     width: 300,
     margin: 2,
     color: { dark: '#C9A84C', light: '#0D0D12' },
-    errorCorrectionLevel: 'M',
+    errorCorrectionLevel: 'H',
   })
 
   return new NextResponse(svg, {

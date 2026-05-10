@@ -24,8 +24,24 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Send welcome email only for new users (account created_at within last 30 seconds)
+      try {
+        const user = sessionData?.session?.user
+        if (user?.email && user.created_at) {
+          const age = Date.now() - new Date(user.created_at).getTime()
+          if (age < 30_000) {
+            fetch(`${origin}/api/email/welcome`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: user.email, name: user.user_metadata?.full_name }),
+            }).catch(() => {})
+          }
+        }
+      } catch {
+        // Welcome email is non-critical — never block auth
+      }
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
