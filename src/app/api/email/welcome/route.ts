@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import nodemailer from 'nodemailer'
 
-// Sends a welcome email using Resend (free: 3,000/month).
-// Requires RESEND_API_KEY env var. If not set, silently skips.
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+})
+
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return NextResponse.json({ skipped: true })
-
   const { email, name } = await req.json() as { email: string; name?: string }
-  if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
+  if (!email || !process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    return NextResponse.json({ skipped: true })
+  }
 
   const firstName = name?.split(' ')[0] ?? 'amigo'
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://soy-card-pro.vercel.app'
@@ -70,21 +76,18 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: 'SOY_CARD_PRO <onboarding@resend.dev>',
+  try {
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
       to: email,
       subject: `${firstName}, tu tarjeta digital está lista ✦`,
       html,
-    }),
-  })
-
-  if (!res.ok) {
-    const body = await res.text()
-    return NextResponse.json({ error: body }, { status: 500 })
+    })
+    return NextResponse.json({ sent: true })
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to send email' },
+      { status: 500 }
+    )
   }
-
-  return NextResponse.json({ sent: true })
 }
