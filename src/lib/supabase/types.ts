@@ -3,7 +3,8 @@ export type CustomLink = { label: string; url: string; icon?: string }
 
 export type UserAccount = {
   id: string; auth_id: string; username: string; full_name: string | null
-  avatar_url: string | null; plan: 'free' | 'pro' | 'team'; created_at: string; updated_at: string
+  avatar_url: string | null; plan: 'free' | 'pro' | 'team'; is_admin: boolean
+  created_at: string; updated_at: string
 }
 export type Profile = {
   id: string; user_id: string; slug: string; display_name: string; title: string | null

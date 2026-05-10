@@ -10,7 +10,7 @@ const NAV = [
   { href: '/dashboard/analytics', label: 'Analítica', icon: '◎' },
 ]
 
-export default function MobileBottomNav() {
+export default function MobileBottomNav({ isAdmin }: { isAdmin?: boolean }) {
   const path = usePathname()
   const supabase = createClient()
 
@@ -37,12 +37,24 @@ export default function MobileBottomNav() {
           <span className="text-[10px] font-medium">{item.label}</span>
         </Link>
       ))}
-      <Link href="/dashboard/share"
-        className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg"
-        style={{ color: 'var(--gold-matte)' }}>
-        <span className="text-lg leading-none">⚡</span>
-        <span className="text-[10px] font-medium">Compartir</span>
-      </Link>
+      {isAdmin ? (
+        <Link href="/admin"
+          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors"
+          style={{
+            color: path === '/admin' ? 'var(--gold-matte)' : 'var(--pearl-muted)',
+            background: path === '/admin' ? 'var(--gold-glass)' : 'transparent',
+          }}>
+          <span className="text-lg leading-none">✦</span>
+          <span className="text-[10px] font-medium">Admin</span>
+        </Link>
+      ) : (
+        <Link href="/dashboard/share"
+          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg"
+          style={{ color: 'var(--gold-matte)' }}>
+          <span className="text-lg leading-none">⚡</span>
+          <span className="text-[10px] font-medium">Compartir</span>
+        </Link>
+      )}
     </nav>
   )
 }

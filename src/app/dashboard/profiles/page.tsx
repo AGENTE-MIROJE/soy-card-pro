@@ -5,9 +5,14 @@ import ProfileCardDash from '@/components/dashboard/ProfileCardDash'
 export default async function ProfilesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: account } = await supabase.from('user_accounts').select('id, username').eq('auth_id', user!.id).single()
+  const { data: account } = await supabase
+    .from('user_accounts').select('id, username, plan').eq('auth_id', user!.id).single()
   const { data: profiles } = await supabase
     .from('profiles').select('*').eq('user_id', account!.id).order('sort_order')
+
+  const isFree = account?.plan === 'free'
+  const profileCount = profiles?.length ?? 0
+  const canCreate = !isFree || profileCount < 1
 
   return (
     <div className="max-w-4xl mx-auto fade-in-up">
@@ -16,10 +21,30 @@ export default async function ProfilesPage() {
           <h1 className="text-display text-pearl text-2xl">Mis Perfiles</h1>
           <p className="text-muted text-sm mt-1">Cada perfil es una tarjeta diferente que puedes compartir.</p>
         </div>
-        <Link href="/dashboard/profiles/new" className="btn-gold" style={{ textDecoration: 'none' }}>
-          + Nuevo perfil
-        </Link>
+        {canCreate ? (
+          <Link href="/dashboard/profiles/new" className="btn-gold" style={{ textDecoration: 'none' }}>
+            + Nuevo perfil
+          </Link>
+        ) : (
+          <Link href="/upgrade" className="btn-gold" style={{ textDecoration: 'none' }}>
+            ✦ Ir a Pro
+          </Link>
+        )}
       </div>
+
+      {/* Freemium upgrade banner */}
+      {isFree && profileCount >= 1 && (
+        <div className="mb-6 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          style={{ background: 'var(--gold-glass)', border: '1px solid var(--gold-border)' }}>
+          <div>
+            <p className="text-pearl font-semibold text-sm mb-1">Plan gratuito — 1 perfil incluido</p>
+            <p className="text-muted text-xs">Actualiza a Pro para crear perfiles ilimitados, NFC, Google Wallet y CRM avanzado.</p>
+          </div>
+          <Link href="/upgrade" className="btn-gold text-xs py-2 px-5 flex-shrink-0" style={{ textDecoration: 'none' }}>
+            Ver planes Pro →
+          </Link>
+        </div>
+      )}
 
       {!profiles?.length ? (
         <div className="glass-card shimmer-border p-12 text-center">

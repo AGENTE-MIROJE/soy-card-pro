@@ -18,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen" style={{ background: 'var(--black-deep)' }}>
       <DashboardSidebar account={account} />
       <main className="flex-1 overflow-auto p-4 md:p-6 pb-24 md:pb-6">{children}</main>
-      <MobileBottomNav />
+      <MobileBottomNav isAdmin={account?.is_admin ?? false} />
     </div>
   )
 }

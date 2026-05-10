@@ -39,6 +39,14 @@ export default function DashboardSidebar({ account }: { account: UserAccount | n
             {item.label}
           </Link>
         ))}
+        {account?.is_admin && (
+          <Link href="/admin"
+            className={`sidebar-item ${path === '/admin' ? 'active' : ''}`}
+            style={{ color: 'var(--gold-matte)' }}>
+            <span className="text-base">✦</span>
+            Admin
+          </Link>
+        )}
       </nav>
 
       {/* Compartir rápido */}
