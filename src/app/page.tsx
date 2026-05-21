@@ -7,36 +7,36 @@ const FEATURES = [
     desc: 'CEO, consultor, creador. Un perfil por faceta. Un QR que lo agrupa todo.',
   },
   {
-    icon: '📡',
-    title: 'NFC Inteligente',
-    desc: 'Acerca tu teléfono y comparte al instante. Sin apps, sin fricción.',
-  },
-  {
     icon: '◉',
     title: 'Captura de leads',
-    desc: 'Quien escanea puede dejarte su contacto en segundos. CRM integrado.',
+    desc: 'Quien escanea puede dejarte su contacto en segundos. Funciona sin conexión.',
   },
   {
     icon: '◎',
     title: 'Analítica real',
-    desc: 'Escaneos por canal, dispositivo y hora. Sabe quién te está buscando.',
+    desc: 'Escaneos por canal, dispositivo y ubicación. Sabe quién te está buscando.',
   },
   {
     icon: '⬇',
-    title: 'vCard automática',
-    desc: 'Con foto y redes incluidas. Un toque y tu contacto queda guardado.',
+    title: 'Exportar contactos',
+    desc: 'Descarga tus leads en Excel o guárdalos directo en tu agenda con un toque.',
   },
   {
     icon: '◳',
-    title: 'Google Wallet',
-    desc: 'Tu tarjeta en el monedero digital de tus contactos. Siempre a mano.',
+    title: 'vCard instantánea',
+    desc: 'Con foto y redes incluidas. Un toque y tu contacto queda guardado en el celular.',
+  },
+  {
+    icon: '🔒',
+    title: 'Seguro y confiable',
+    desc: 'Cifrado en tránsito, protección contra spam y datos protegidos con RLS.',
   },
 ]
 
 const STEPS = [
-  { n: '01', title: 'Crea tu perfil', desc: 'Nombre, foto, cargo, empresa, redes sociales. Listo en 2 minutos.' },
-  { n: '02', title: 'Comparte tu QR o link', desc: 'Muéstralo en pantalla, envíalo por WhatsApp o prográmalo en NFC.' },
-  { n: '03', title: 'Captura contactos', desc: 'Quien lo escanea deja sus datos. Los ves en tiempo real en tu dashboard.' },
+  { n: '01', title: 'Crea tu perfil', desc: 'Nombre, foto, cargo, empresa y redes sociales. Listo en 2 minutos.' },
+  { n: '02', title: 'Comparte tu QR o link', desc: 'Muéstralo en pantalla, envíalo por WhatsApp o por email.' },
+  { n: '03', title: 'Captura y exporta contactos', desc: 'Quien te escanea deja sus datos. Los exportas a Excel o los guardas en tu agenda.' },
 ]
 
 const TESTIMONIALS = [
@@ -45,11 +45,11 @@ const TESTIMONIALS = [
     name: 'Laura M.', role: 'Consultora independiente',
   },
   {
-    text: '"Tengo un perfil como CEO y otro como orador. Cada uno con su imagen. Una sola app."',
+    text: '"Tengo un perfil como CEO y otro como consultor. Cada uno con su imagen. Una sola app."',
     name: 'Ricardo P.', role: 'Empresario · Bogotá',
   },
   {
-    text: '"Lo mejor: el analítico. Sé cuándo y desde dónde me escanearon. Pura inteligencia comercial."',
+    text: '"Lo mejor: exportar los leads a Excel después de cada evento. Pura inteligencia comercial."',
     name: 'Valeria C.', role: 'Directora comercial',
   },
 ]
@@ -59,7 +59,7 @@ const PLANS = [
     name: 'Gratis',
     price: '$0',
     period: 'para siempre',
-    features: ['1 perfil activo', 'QR + link único', 'Captura de leads', 'Analítica básica'],
+    features: ['1 perfil activo', 'QR + link único', 'Captura de leads', 'Exportar a Excel', 'Analítica básica'],
     cta: 'Comenzar gratis',
     href: '/login',
     highlight: false,
@@ -68,7 +68,7 @@ const PLANS = [
     name: 'Pro',
     price: '$9',
     period: '/ mes',
-    features: ['Perfiles ilimitados', 'NFC + Google Wallet', 'CRM avanzado', 'Analítica detallada', 'Soporte prioritario'],
+    features: ['Perfiles ilimitados', 'CRM avanzado', 'Analítica detallada por canal', 'Exportar leads ilimitados', 'Soporte prioritario'],
     cta: 'Ir a Pro',
     href: '/login',
     highlight: true,
@@ -76,7 +76,7 @@ const PLANS = [
 ]
 
 const STATS = [
-  { n: '10K+', label: 'tarjetas compartidas' },
+  { n: '100%', label: 'sin papel' },
   { n: '98%', label: 'compatibilidad móvil' },
   { n: '2 min', label: 'para estar listo' },
 ]
