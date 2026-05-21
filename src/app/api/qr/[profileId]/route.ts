@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { isSafeUrl } from '@/lib/rate-limit'
 import QRCode from 'qrcode'
 import sharp from 'sharp'
 
@@ -33,8 +34,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prof
 
     let finalBuffer: Buffer = qrBuffer as unknown as Buffer
 
-    // Composite avatar in center if available
-    if (profile.avatar_url) {
+    // Composite avatar in center if available (solo URLs de dominios seguros)
+    if (profile.avatar_url && isSafeUrl(profile.avatar_url)) {
       try {
         const avatarRes = await fetch(profile.avatar_url)
         if (avatarRes.ok) {
