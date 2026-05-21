@@ -7,17 +7,12 @@ interface Props { profile: Profile; username: string; appUrl: string; onClose: (
 export default function ShareModal({ profile, username, appUrl, onClose }: Props) {
   const [qrSrc, setQrSrc]         = useState<string | null>(null)
   const [copied, setCopied]        = useState(false)
-  const [nfcSupported, setNfc]     = useState(false)
-  const [nfcWriting, setNfcWr]     = useState(false)
-  const [nfcMsg, setNfcMsg]        = useState('')
   const [sharing, setSharing]      = useState(false)
   const [canShareFile, setCanShare] = useState(false)
 
   useEffect(() => {
     setQrSrc(`/api/qr/${profile.id}?via=qr`)
     if (typeof window !== 'undefined') {
-      if ('NDEFReader' in window) setNfc(true)
-      // Probar si el browser soporta compartir archivos
       if (navigator.canShare?.({ files: [new File([''], 'test.png', { type: 'image/png' })] })) {
         setCanShare(true)
       }
@@ -70,20 +65,6 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
     }
   }
 
-  const writeNFC = async () => {
-    if (!('NDEFReader' in window)) return
-    setNfcWr(true); setNfcMsg('Acerca una etiqueta NFC...')
-    try {
-      const ndef = new (window as any).NDEFReader()
-      await ndef.write({ records: [{ recordType: 'url', data: `${appUrl}?via=nfc` }] })
-      setNfcMsg('✓ NFC programado correctamente')
-    } catch {
-      setNfcMsg('✗ Error al escribir. Inténtalo de nuevo.')
-    }
-    setNfcWr(false)
-    setTimeout(() => setNfcMsg(''), 3000)
-  }
-
   return (
     <>
       <div className="bottom-sheet-overlay" onClick={onClose} />
@@ -119,53 +100,29 @@ export default function ShareModal({ profile, username, appUrl, onClose }: Props
         )}
 
         {/* Opciones de compartir */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          <button onClick={copyLink} className="btn-icon py-4">
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <button onClick={copyLink} className="btn-icon py-5">
             <span className="text-xl">{copied ? '✓' : '⎘'}</span>
             <span>{copied ? 'Copiado' : 'Copiar link'}</span>
           </button>
 
-          <button onClick={shareLink} className="btn-icon py-4">
+          <button onClick={shareLink} className="btn-icon py-5">
             <span className="text-xl">↑</span>
             <span>Compartir</span>
           </button>
 
-          {profile.email && (
-            <button onClick={() => window.location.href = `mailto:?subject=Mi tarjeta digital&body=${encodeURIComponent(appUrl)}`}
-              className="btn-icon py-4">
-              <span className="text-xl">✉</span>
-              <span>Email</span>
-            </button>
-          )}
-
-          {profile.phone && (
-            <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Mi tarjeta digital: ${appUrl}?via=link`)}`, '_blank', 'noopener,noreferrer')}
-              className="btn-icon py-4">
-              <span className="text-xl">💬</span>
-              <span>WhatsApp</span>
-            </button>
-          )}
-
-          <button onClick={() => window.open(`/api/wallet/google/${profile.id}`, '_blank')}
-            className="btn-icon py-4">
-            <span className="text-xl">◳</span>
-            <span>G. Wallet</span>
+          <button onClick={() => window.location.href = `mailto:?subject=Mi tarjeta digital&body=${encodeURIComponent(appUrl)}`}
+            className="btn-icon py-5">
+            <span className="text-xl">✉</span>
+            <span>Email</span>
           </button>
 
-          {nfcSupported && (
-            <button onClick={writeNFC} disabled={nfcWriting} className="btn-icon py-4">
-              <span className="text-xl">📡</span>
-              <span>{nfcWriting ? '...' : 'Escribir NFC'}</span>
-            </button>
-          )}
+          <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Mi tarjeta digital: ${appUrl}?via=link`)}`, '_blank', 'noopener,noreferrer')}
+            className="btn-icon py-5">
+            <span className="text-xl">💬</span>
+            <span>WhatsApp</span>
+          </button>
         </div>
-
-        {nfcMsg && (
-          <p className="text-center text-sm mb-3"
-            style={{ color: nfcMsg.startsWith('✓') ? 'var(--gold-matte)' : 'var(--pearl-muted)' }}>
-            {nfcMsg}
-          </p>
-        )}
 
         {/* Link visible */}
         <div className="flex items-center gap-2 p-3 rounded-xl mb-4"
