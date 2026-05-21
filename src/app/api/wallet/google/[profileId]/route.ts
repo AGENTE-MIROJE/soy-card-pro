@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { GoogleAuth } from 'google-auth-library'
 import crypto from 'crypto'
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID!
 const SA_JSON_B64 = process.env.GOOGLE_WALLET_SA_JSON_B64!
-const WALLET_API = 'https://walletobjects.googleapis.com/walletobjects/v1'
-const SCOPES = ['https://www.googleapis.com/auth/wallet_object.issuer']
 
 function signJWT(payload: object, privateKey: string, clientEmail: string): string {
   const header = { alg: 'RS256', typ: 'JWT' }
@@ -17,34 +14,6 @@ function signJWT(payload: object, privateKey: string, clientEmail: string): stri
   const sign = crypto.createSign('RSA-SHA256')
   sign.update(signingInput)
   return `${signingInput}.${sign.sign(privateKey, 'base64url')}`
-}
-
-async function getAccessToken(saJson: object): Promise<string> {
-  const auth = new GoogleAuth({ credentials: saJson, scopes: SCOPES })
-  const client = await auth.getClient()
-  const token = await client.getAccessToken()
-  if (!token.token) throw new Error('No access token')
-  return token.token
-}
-
-async function upsertClass(classId: string, token: string): Promise<void> {
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-  const check = await fetch(`${WALLET_API}/genericClass/${encodeURIComponent(classId)}`, { headers })
-  if (check.ok) return
-
-  const res = await fetch(`${WALLET_API}/genericClass`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      id: classId,
-      issuerName: 'SOY_CARD_PRO',
-      reviewStatus: 'UNDER_REVIEW',
-    }),
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Failed to create wallet class: ${err}`)
-  }
 }
 
 export async function GET(
@@ -70,9 +39,10 @@ export async function GET(
     const classId = `${ISSUER_ID}.soy_card_pro_business_card`
     const objectId = `${ISSUER_ID}.profile_${profileId.replace(/-/g, '_')}`
 
-    // Garantizar que la clase existe antes de emitir el pase
-    const token = await getAccessToken(saJson)
-    await upsertClass(classId, token)
+    const genericClass = {
+      id: classId,
+      issuerName: 'SOY_CARD_PRO',
+    }
 
     const genericObject = {
       id: objectId,
@@ -103,7 +73,12 @@ export async function GET(
       heroImage: { sourceUri: { uri: `${appUrl}/icons/icon-512.png` } },
     }
 
-    const jwt = signJWT({ genericObjects: [genericObject] }, saJson.private_key, saJson.client_email)
+    // Clase + objeto en el JWT — Google los crea automáticamente al guardar
+    const jwt = signJWT(
+      { genericClasses: [genericClass], genericObjects: [genericObject] },
+      saJson.private_key,
+      saJson.client_email
+    )
     return NextResponse.redirect(`https://pay.google.com/gp/v/save/${jwt}`)
   } catch (e: any) {
     console.error('Wallet error:', e)
