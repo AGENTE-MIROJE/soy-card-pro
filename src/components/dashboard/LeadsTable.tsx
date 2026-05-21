@@ -38,12 +38,41 @@ export default function LeadsTable({ leads: initialLeads }: { leads: (Lead & { p
   }
 
   const exportCSV = () => {
-    const rows = [['Nombre','Email','Teléfono','Empresa','Perfil','Tag','Fecha'],
-      ...leads.map(l => [l.name??'',l.email??'',l.phone??'',l.company??'',
-        (l.profiles as any)?.display_name??'', l.tag, new Date(l.created_at).toLocaleDateString('es-CO')])]
-    const csv = rows.map(r => r.join(',')).join('\n')
-    const a = document.createElement('a'); a.href = 'data:text/csv,' + encodeURIComponent(csv)
-    a.download = 'leads_soycardpro.csv'; a.click()
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`
+    const rows = [
+      ['Nombre','Email','Teléfono','Empresa','Perfil','Tag','Fecha'],
+      ...leads.map(l => [
+        l.name ?? '', l.email ?? '', l.phone ?? '', l.company ?? '',
+        (l.profiles as any)?.display_name ?? '', l.tag,
+        new Date(l.created_at).toLocaleDateString('es-CO'),
+      ]),
+    ]
+    const csv = '﻿' + rows.map(r => r.map(String).map(esc).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `leads_soycardpro_${new Date().toISOString().slice(0,10)}.csv`
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  const saveContact = (lead: typeof leads[0]) => {
+    const lines = [
+      'BEGIN:VCARD', 'VERSION:3.0',
+      `FN:${lead.name ?? 'Sin nombre'}`,
+      lead.phone  ? `TEL:${lead.phone}`   : '',
+      lead.email  ? `EMAIL:${lead.email}` : '',
+      lead.company ? `ORG:${lead.company}` : '',
+      lead.notes  ? `NOTE:${lead.notes}`  : '',
+      `X-SOYCARDPRO:lead capturado ${new Date(lead.created_at).toLocaleDateString('es-CO')}`,
+      'END:VCARD',
+    ].filter(Boolean).join('\r\n')
+    const blob = new Blob([lines], { type: 'text/vcard;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = `${(lead.name ?? 'contacto').replace(/\s+/g, '_')}.vcf`
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   const filtered = filter
@@ -78,7 +107,7 @@ export default function LeadsTable({ leads: initialLeads }: { leads: (Lead & { p
             </button>
           )}
           <button onClick={exportCSV} className="btn-ghost-gold text-xs py-2 px-4">
-            ↓ Exportar CSV
+            ↓ Excel
           </button>
         </div>
       </div>
@@ -123,9 +152,14 @@ export default function LeadsTable({ leads: initialLeads }: { leads: (Lead & { p
                   </td>
                   <td className="text-subtle text-xs">{new Date(lead.created_at).toLocaleDateString('es-CO')}</td>
                   <td>
-                    <button onClick={() => deleteLead(lead.id)}
-                      className="text-red-400 hover:text-red-300 transition-colors px-2"
-                      title="Eliminar lead">✕</button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => saveContact(lead)}
+                        className="text-gold-pearl hover:text-gold transition-colors px-2 text-sm"
+                        title="Guardar en contactos">👤</button>
+                      <button onClick={() => deleteLead(lead.id)}
+                        className="text-red-400 hover:text-red-300 transition-colors px-2"
+                        title="Eliminar lead">✕</button>
+                    </div>
                   </td>
                 </tr>
               ))}
