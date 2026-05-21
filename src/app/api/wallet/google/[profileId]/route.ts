@@ -105,10 +105,10 @@ export async function GET(
 
     const jwt = signJWT({ genericObjects: [genericObject] }, saJson.private_key, saJson.client_email)
     return NextResponse.redirect(`https://pay.google.com/gp/v/save/${jwt}`)
-  } catch (e: any) {
+  } catch (e) {
     console.error('Wallet error:', e)
     return NextResponse.json(
-      { error: e?.message ?? String(e), stack: e?.stack?.split('\n').slice(0,3) },
+      { error: 'Error generando el pase. Intenta de nuevo.' },
       { status: 500 }
     )
   }
